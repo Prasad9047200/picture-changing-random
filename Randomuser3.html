@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Advanced Random User App</title>
+
+<style>
+/* ---------- GLOBAL ---------- */
+:root {
+    --bg: #f4f6fb;
+    --card: #ffffff;
+    --text: #333;
+    --btn: linear-gradient(135deg, #667eea, #764ba2);
+}
+
+body.dark {
+    --bg: #121212;
+    --card: #1f1f1f;
+    --text: #fff;
+}
+
+body {
+    margin: 0;
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: var(--bg);
+    font-family: 'Segoe UI', sans-serif;
+    transition: background 0.4s;
+}
+
+/* ---------- CARD ---------- */
+.card {
+    background: var(--card);
+    color: var(--text);
+    width: 340px;
+    padding: 25px;
+    border-radius: 18px;
+    text-align: center;
+    box-shadow: 0 15px 30px rgba(0,0,0,0.15);
+    animation: fadeIn 0.6s ease;
+}
+
+h1 {
+    margin-bottom: 10px;
+}
+
+/* ---------- USER ---------- */
+#user img {
+    width: 140px;
+    height: 140px;
+    border-radius: 50%;
+    border: 4px solid #667eea;
+    margin-top: 10px;
+    transition: transform 0.4s;
+}
+
+#user img:hover {
+    transform: scale(1.1);
+}
+
+/* ---------- BUTTONS ---------- */
+button {
+    margin: 8px 4px;
+    padding: 10px 18px;
+    border: none;
+    border-radius: 25px;
+    background: var(--btn);
+    color: white;
+    cursor: pointer;
+    font-size: 14px;
+    transition: transform 0.3s, box-shadow 0.3s;
+}
+
+button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 16px rgba(0,0,0,0.3);
+}
+
+button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+/* ---------- SKELETON ---------- */
+.skeleton {
+    width: 140px;
+    height: 140px;
+    border-radius: 50%;
+    margin: auto;
+    background: linear-gradient(90deg,#ddd 25%,#ccc 37%,#ddd 63%);
+    animation: shimmer 1.5s infinite;
+}
+
+@keyframes shimmer {
+    0% { background-position: -200px 0; }
+    100% { background-position: 200px 0; }
+}
+
+/* ---------- EXTRA INFO ---------- */
+.extra {
+    font-size: 14px;
+    margin-top: 10px;
+}
+
+/* ---------- ANIMATIONS ---------- */
+@keyframes fadeIn {
+    from { opacity: 0; transform: scale(0.9); }
+    to { opacity: 1; transform: scale(1); }
+}
+
+.error {
+    color: red;
+    animation: shake 0.4s;
+}
+
+@keyframes shake {
+    0% { transform: translateX(0); }
+    25% { transform: translateX(-5px); }
+    50% { transform: translateX(5px); }
+    75% { transform: translateX(-5px); }
+    100% { transform: translateX(0); }
+}
+</style>
+</head>
+
+<body>
+
+<div class="card">
+    <h1>Random User</h1>
+    <div id="user"></div>
+
+    <button id="getBtn" onclick="fetchUser()">Get User</button>
+    <button onclick="toggleInfo()">Show More</button>
+    <button onclick="saveUser()">Save</button>
+    <button onclick="toggleTheme()">🌙</button>
+</div>
+
+<script>
+const userDiv = document.getElementById("user");
+const btn = document.getElementById("getBtn");
+let currentUser = null;
+let showMore = false;
+
+/* ---------- FETCH USER ---------- */
+async function fetchUser() {
+    btn.disabled = true;
+    btn.innerText = "Loading...";
+
+    userDiv.innerHTML = `<div class="skeleton"></div>`;
+
+    try {
+        const res = await fetch("https://randomuser.me/api/");
+        if (!res.ok) throw new Error("API Error");
+
+        const data = await res.json();
+        currentUser = data.results[0];
+        showMore = false;
+        displayUser();
+    } catch (err) {
+        userDiv.innerHTML = `<p class="error">Failed to load user</p>
+                             <button onclick="fetchUser()">Retry</button>`;
+    }
+
+    btn.disabled = false;
+    btn.innerText = "Get User";
+}
+
+/* ---------- DISPLAY USER ---------- */
+function displayUser() {
+    const u = currentUser;
+    userDiv.innerHTML = `
+        <p><strong>${u.name.title} ${u.name.first} ${u.name.last}</strong></p>
+        <img src="${u.picture.large}">
+        ${showMore ? `
+            <div class="extra">
+                <p>Email: ${u.email}</p>
+                <p>Age: ${u.dob.age}</p>
+                <p>Country: ${u.location.country}</p>
+            </div>` : ""}
+    `;
+}
+
+/* ---------- TOGGLE INFO ---------- */
+function toggleInfo() {
+    if (!currentUser) return;
+    showMore = !showMore;
+    displayUser();
+}
+
+/* ---------- SAVE USER ---------- */
+function saveUser() {
+    if (!currentUser) return alert("No user to save!");
+    localStorage.setItem("savedUser", JSON.stringify(currentUser));
+    alert("User saved successfully!");
+}
+
+/* ---------- THEME ---------- */
+function toggleTheme() {
+    document.body.classList.toggle("dark");
+}
+</script>
+
+</body>
+</html>
